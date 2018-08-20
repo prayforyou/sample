@@ -1,0 +1,322 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+    "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.coderby.myapp.hr.dao.IEmpRepository">
+	<resultMap id="empMap"
+		type="com.coderby.myapp.hr.model.EmpVO">
+		<result property="employeeId" column="EMPLOYEE_ID" />
+		<result property="firstName" column="FIRST_NAME" />
+		<result property="lastName" column="LAST_NAME" />
+		<result property="email" column="EMAIL" />
+		<result property="phoneNumber" column="PHONE_NUMBER" />
+		<result property="hireDate" column="HIRE_DATE" />
+		<result property="jobId" column="JOB_ID" />
+		<result property="salary" column="SALARY" />
+		<result property="commissionPct" column="COMMISSION_PCT" />
+		<result property="managerId" column="MANAGER_ID" />
+		<result property="departmentId" column="DEPARTMENT_ID" />
+	</resultMap>
+	<resultMap id="proMap"
+		type="com.coderby.myapp.hr.model.ProVO">
+		<result property="sale_no" column="SALE_NO" />
+		<result property="pd_no" column="PD_NO" />
+		<result property="pd_nm" column="PD_NM" />
+		<result property="pd_price" column="PD_PRICE" />
+		<result property="pd_check" column="PD_CHECK" />
+		<result property="startdate" column="SALE_DATE" />
+		<result property="enddate" column="SALE_DATE" />
+		<result property="dfff" column="DFFF"/>
+		<result property="sdsd" column="SDSD"/>
+
+	</resultMap>
+
+	<!-- <select id="getEmpCount" resultType="int"> SELECT COUNT(*) FROM EMPLOYEES 
+		</select> -->
+
+	<select id="getProList" resultMap="proMap">
+		SELECT * FROM PRODUCT WHERE
+		PD_CHECK=1
+	</select>
+
+	<select id="getProList2" resultMap="proMap">
+		SELECT * FROM PRODUCT WHERE
+		PD_CHECK=2
+	</select>
+
+	<update id="updateMenu"
+		parameterType="com.coderby.myapp.hr.model.ProVO">
+		UPDATE PRODUCT
+		SET PD_CHECK=2
+		WHERE PD_NO=#{pd_no}
+	</update>
+
+	<update id="updateMenu2"
+		parameterType="com.coderby.myapp.hr.model.ProVO">
+		UPDATE PRODUCT
+		SET PD_CHECK=1
+		WHERE PD_NO=#{pd_no}
+	</update>
+
+	<select id="getEmpCount" parameterType="int" resultType="int">
+		SELECT COUNT(*) FROM EMPLOYEES
+		<if test="deptid != null">
+			WHERE DEPARTMENT_ID = #{deptid}
+		</if>
+	</select>
+
+	<select id="getEmpList" resultMap="empMap">
+		SELECT * FROM EMPLOYEES
+	</select>
+
+	<select id="getEmpInfo" parameterType="int"
+		resultType="com.coderby.myapp.hr.model.EmpVO">
+		SELECT EMPLOYEE_ID AS employeeId,
+		FIRST_NAME AS firstName,
+		LAST_NAME AS lastName,
+		EMAIL AS email,
+		PHONE_NUMBER AS phoneNumber,
+		HIRE_DATE AS hireDate,
+		JOB_ID AS jobId,
+		SALARY AS salary,
+		COMMISSION_PCT
+		AS commissionPct,
+		MANAGER_ID AS managerId,
+		DEPARTMENT_ID AS departmentId
+		FROM EMPLOYEES WHERE EMPLOYEE_ID = #{empid}
+	</select>
+
+	<update id="updateEmp"
+		parameterType="com.coderby.myapp.hr.model.EmpVO">
+		UPDATE EMPLOYEES
+		SET FIRST_NAME=#{firstName},
+		LAST_NAME=#{lastName}, SALARY=#{salary}
+		WHERE EMPLOYEE_ID=#{employeeId}
+	</update>
+
+	<insert id="insertEmp"
+		parameterType="com.coderby.myapp.hr.model.EmpVO">
+		INSERT INTO CUSTOMER (
+		CUSTOMER_ID, FIRST_NAME,
+		LAST_NAME, EMAIL, PHONE_NUMBER,
+		HIRE_DATE, JOB_ID, SALARY,
+		COMMISSION_PCT, MANAGER_ID, DEPARTMENT_ID)
+		VALUES (
+		#{employeeId},
+		#{firstName}, #{lastName}, #{email}, #{phoneNumber},
+		SYSDATE, #{jobId},
+		#{salary}, #{commissionPct}, #{managerId},
+		#{departmentId})
+	</insert>
+
+	<delete id="deleteEmp">
+		DELETE FROM EMPLOYEES
+		WHERE EMPLOYEE_ID=#{empid} AND
+		EMAIL=#{email}
+	</delete>
+
+	<delete id="deleteJobHistory" parameterType="int">
+		DELETE FROM
+		JOB_HISTORY
+		WHERE EMPLOYEE_ID=#{empid}
+	</delete>
+
+	<select id="getAllJobId" resultType="hashmap">
+		SELECT JOB_ID AS "jobId",
+		JOB_TITLE AS "title" FROM JOBS
+	</select>
+
+	<select id="getAllManagerId" resultType="hashmap">
+		SELECT
+		D.MANAGER_ID AS
+		"managerId",
+		E.FIRST_NAME AS "firstName"
+		FROM DEPARTMENTS D JOIN
+		EMPLOYEES E
+		ON D.MANAGER_ID = E.EMPLOYEE_ID
+		ORDER BY D.MANAGER_ID
+	</select>
+
+	<select id="getAllDeptId" resultType="hashmap">
+		SELECT
+		DEPARTMENT_ID AS
+		"departmentId",
+		DEPARTMENT_NAME AS "departmentName"
+		FROM DEPARTMENTS
+	</select>
+
+	<select id="getConfirmList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select *
+		from sale_detail, sale
+		where sale.sale_no = sale_detail.sale_no
+		AND
+		sale.sale_date BETWEEN #{startdate} and #{enddate} ORDER BY
+		sale.SALE_NO ASC, CAST(sale_detail.PD_NO AS INTEGER) ASC
+	</select>
+
+	<select id="getAmountList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select pd_no, DFFF, pd_nm 
+		from 
+		(select pd_no, pd_nm, sum(DFF) as DFFF 
+		from
+		(select p.pd_nm, p.pd_no, sd.sd_num, p.pd_price, sd.sd_num * p.pd_price as DFF 
+		from 
+		product p, sale_detail SD 
+		WHERE p.pd_no = SD.pd_no) 
+		group by pd_no, pd_nm 
+		order by DFFF DESC)
+
+	</select>
+
+
+	<select id="getCountList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select pd_nm, SDSD 
+		from 
+		(select p.pd_no ,p.pd_nm, sum(sd_num) as SDSD 
+		from 
+		product p, sale_detail SD 
+		where p.pd_no = sd.pd_no 
+		group by p.pd_no, p.pd_nm 
+		order by sum(sd_num) DESC )
+	</select>
+	
+	<select id="getJanList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/01/01' and '17/01/31'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getFebList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/02/01' and '17/02/28'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getMarList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/03/01' and '17/03/31'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getAprList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/04/01' and '17/04/30'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getMayList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/05/01' and '17/05/31'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getJunList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/06/01' and '17/06/30'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getJulList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/07/01' and '17/07/31'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getAugList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/08/01' and '17/08/31'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getSepList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/09/01' and '17/09/30'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getOctList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/10/01' and '17/10/31'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getNovList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/11/01' and '17/11/30'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+	<select id="getDecList"
+		parameterType="com.coderby.myapp.hr.model.ProVO" resultMap="proMap">
+		select
+		pd_nm, sum(sd_num) as sdsd, sum(sd_num*pd_price) as dfff
+		from sale s, sale_detail sd, product p
+		where s.sale_date between '17/12/01' and '17/12/31'
+		and p.pd_no = sd.pd_no
+		and s.sale_no = sd.sale_no
+		group by pd_nm
+	</select>
+
+
+
+
+
+
+</mapper>
